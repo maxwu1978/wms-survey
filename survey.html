@@ -562,16 +562,24 @@ form.addEventListener('submit', async (e) => {
       });
     }
 
-    // 4. Also send via Formspree as backup (no PDF but gets the data)
-    await fetch('https://formspree.io/f/xpwzgqkr', {
+    // 4. Send to backend API with PDF attachment (SMTP email with PDF)
+    const API_BASE = window.location.hostname === 'localhost'
+      ? ''  // same-origin when served from backend
+      : 'https://81773a36fa75e344-84-2-217-44.serveousercontent.com';
+
+    await fetch(API_BASE + '/api/v1/survey/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        _subject: `WMS Assessment: ${data.company_name}`,
-        ...data,
-        _replyto: data.email,
+        company_name: data.company_name,
+        contact_name: data.contact_name,
+        email: data.email,
+        phone: data.phone || '',
+        summary: summary,
+        pdf_base64: pdfBase64,
+        raw_data: data,
       }),
-    }).catch(() => {});
+    }).catch((err) => console.log('Backend API:', err));
 
     // 5. Auto-download PDF for the submitter too
     pdf.save(`WMS-Assessment-${data.company_name.replace(/\s+/g, '-')}.pdf`);
