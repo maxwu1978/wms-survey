@@ -4,94 +4,174 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WMS Readiness Survey | GreenEcoPower Corp</title>
+<!-- jsPDF for client-side PDF generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<!-- EmailJS for sending email from client -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f4f8; color: #1a202c; line-height: 1.6; }
-  .header { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); color: white; padding: 40px 20px; text-align: center; }
-  .header h1 { font-size: 28px; margin-bottom: 8px; }
-  .header p { opacity: 0.9; font-size: 15px; max-width: 600px; margin: 0 auto; }
-  .container { max-width: 720px; margin: -30px auto 40px; padding: 0 16px; }
-  .card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 28px 32px; margin-bottom: 20px; }
-  .card h2 { font-size: 18px; color: #1e40af; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
-  .card h2 .num { background: #1e40af; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-  .card .subtitle { font-size: 13px; color: #64748b; margin-bottom: 20px; }
-  .field { margin-bottom: 18px; }
-  .field label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; color: #334155; }
-  .field .hint { font-size: 12px; color: #94a3b8; margin-bottom: 4px; }
-  input[type="text"], input[type="email"], input[type="tel"], input[type="number"], textarea, select {
-    width: 100%; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px;
-    transition: border-color 0.2s; background: #fafbfc;
+  body { font-family: 'Inter', -apple-system, sans-serif; background: #f0f4f8; color: #1a202c; line-height: 1.6; }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #2563eb 100%);
+    color: white; padding: 48px 20px 64px; text-align: center;
+    position: relative;
   }
-  input:focus, textarea:focus, select:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+  .header::before {
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .header-content { position: relative; z-index: 1; }
+  .header .logo { font-size: 13px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.7; margin-bottom: 12px; }
+  .header h1 { font-size: 32px; font-weight: 800; max-width: 560px; margin: 0 auto 10px; line-height: 1.2; }
+  .header p { opacity: 0.85; font-size: 15px; max-width: 520px; margin: 0 auto; }
+  .header .time-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; margin-top: 16px;
+  }
+
+  .container { max-width: 700px; margin: -28px auto 40px; padding: 0 16px; position: relative; z-index: 2; }
+
+  /* Cards */
+  .card {
+    background: white; border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+    padding: 28px 32px; margin-bottom: 16px;
+    border: 1px solid rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s;
+  }
+  .card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06); }
+  .card h2 { font-size: 18px; color: #0f172a; margin-bottom: 2px; display: flex; align-items: center; gap: 10px; }
+  .card h2 .num {
+    background: linear-gradient(135deg, #1e40af, #3b82f6);
+    color: white; width: 30px; height: 30px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0;
+  }
+  .card .subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 22px; }
+
+  /* Fields */
+  .field { margin-bottom: 20px; }
+  .field label { display: block; font-weight: 600; font-size: 13.5px; margin-bottom: 6px; color: #334155; }
+  .field .hint { font-size: 12px; color: #94a3b8; margin-bottom: 6px; }
+  input[type="text"], input[type="email"], input[type="tel"], input[type="number"], textarea, select {
+    width: 100%; padding: 11px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px;
+    font-family: inherit; transition: all 0.2s; background: #fafbfc;
+  }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: #3b82f6; background: white; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
   textarea { min-height: 80px; resize: vertical; }
-  .radio-group, .check-group { display: flex; flex-direction: column; gap: 8px; }
-  .radio-group.horizontal, .check-group.horizontal { flex-direction: row; flex-wrap: wrap; gap: 10px; }
-  .radio-group label, .check-group label { font-weight: 400; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; transition: all 0.15s; }
-  .radio-group label:hover, .check-group label:hover { background: #f1f5f9; border-color: #93c5fd; }
-  .radio-group input:checked + span, .check-group input:checked + span { color: #1e40af; font-weight: 500; }
-  .radio-group label:has(input:checked), .check-group label:has(input:checked) { border-color: #3b82f6; background: #eff6ff; }
-  .scale-row { display: flex; gap: 0; margin-top: 4px; }
-  .scale-row label { flex: 1; text-align: center; padding: 10px 4px; border: 1px solid #e2e8f0; cursor: pointer; font-size: 13px; transition: all 0.15s; }
-  .scale-row label:first-child { border-radius: 8px 0 0 8px; }
-  .scale-row label:last-child { border-radius: 0 8px 8px 0; }
+  select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+
+  /* Radio & Checkbox */
+  .radio-group, .check-group { display: flex; flex-direction: column; gap: 6px; }
+  .radio-group.horizontal, .check-group.horizontal { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+  .radio-group label, .check-group label {
+    font-weight: 400; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13.5px;
+    padding: 10px 14px; border: 1.5px solid #e2e8f0; border-radius: 10px; transition: all 0.15s;
+  }
+  .radio-group label:hover, .check-group label:hover { border-color: #93c5fd; background: #f8faff; }
+  .radio-group label:has(input:checked), .check-group label:has(input:checked) {
+    border-color: #3b82f6; background: #eff6ff;
+  }
+  .radio-group label:has(input:checked) span, .check-group label:has(input:checked) span { color: #1e40af; font-weight: 500; }
+  input[type="radio"], input[type="checkbox"] { accent-color: #3b82f6; width: 16px; height: 16px; flex-shrink: 0; }
+
+  /* Scale */
+  .scale-row { display: flex; gap: 0; margin-top: 6px; }
+  .scale-row label {
+    flex: 1; text-align: center; padding: 11px 4px; border: 1.5px solid #e2e8f0;
+    cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.15s; color: #64748b;
+  }
+  .scale-row label:first-child { border-radius: 10px 0 0 10px; }
+  .scale-row label:last-child { border-radius: 0 10px 10px 0; }
   .scale-row label:not(:first-child) { border-left: none; }
-  .scale-row label:hover { background: #f1f5f9; }
-  .scale-row label:has(input:checked) { background: #1e40af; color: white; border-color: #1e40af; }
+  .scale-row label:hover { background: #f1f5f9; color: #334155; }
+  .scale-row label:has(input:checked) { background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; border-color: #1e40af; }
   .scale-row input { display: none; }
-  .scale-labels { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-top: 4px; }
+  .scale-labels { display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-top: 4px; padding: 0 2px; }
+
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   @media(max-width:600px) { .grid-2 { grid-template-columns: 1fr; } .radio-group.horizontal { flex-direction: column; } }
-  .submit-btn { width: 100%; padding: 14px; background: #1e40af; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-  .submit-btn:hover { background: #1e3a8a; }
-  .footer { text-align: center; color: #94a3b8; font-size: 12px; padding: 20px; }
-  .required::after { content: " *"; color: #ef4444; }
-  .progress { background: #e2e8f0; height: 4px; border-radius: 2px; margin-bottom: 24px; }
-  .progress-bar { background: #3b82f6; height: 100%; border-radius: 2px; transition: width 0.3s; }
-  .thank-you { text-align: center; padding: 60px 20px; }
-  .thank-you h2 { font-size: 24px; color: #059669; margin-bottom: 12px; }
-  .thank-you p { color: #64748b; max-width: 400px; margin: 0 auto; }
+
+  /* Progress */
+  .progress { background: #e2e8f0; height: 5px; border-radius: 3px; margin-bottom: 20px; overflow: hidden; }
+  .progress-bar { background: linear-gradient(90deg, #3b82f6, #8b5cf6); height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+
+  /* Submit */
+  .submit-btn {
+    width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; font-family: inherit;
+    background: linear-gradient(135deg, #1e40af, #3b82f6); color: white;
+    box-shadow: 0 4px 14px rgba(59,130,246,0.35);
+  }
+  .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59,130,246,0.4); }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  /* Thank you */
+  .thank-you { text-align: center; padding: 60px 24px; }
+  .thank-you .check-circle {
+    width: 72px; height: 72px; background: linear-gradient(135deg, #059669, #10b981);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px; box-shadow: 0 4px 14px rgba(16,185,129,0.3);
+  }
+  .thank-you .check-circle svg { width: 36px; height: 36px; }
+  .thank-you h2 { font-size: 24px; color: #059669; margin-bottom: 8px; }
+  .thank-you p { color: #64748b; max-width: 420px; margin: 0 auto; font-size: 14px; line-height: 1.7; }
   .hidden { display: none; }
+
+  /* Footer */
+  .footer { text-align: center; color: #94a3b8; font-size: 12px; padding: 24px 20px 32px; }
+  .footer a { color: #3b82f6; text-decoration: none; }
+
+  .required::after { content: " *"; color: #ef4444; }
+
+  /* Sending overlay */
+  .sending-overlay {
+    position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; z-index: 100;
+  }
+  .sending-box {
+    background: white; border-radius: 16px; padding: 40px; text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>Warehouse Operations Assessment</h1>
-  <p>Help us understand your current warehouse operations so we can recommend the best WMS solution for your business. Takes about 5 minutes.</p>
+  <div class="header-content">
+    <div class="logo">GreenEcoPower Corp</div>
+    <h1>Warehouse Operations Assessment</h1>
+    <p>Help us understand your current warehouse operations so we can recommend the best WMS solution for your business.</p>
+    <div class="time-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      Takes about 5 minutes
+    </div>
+  </div>
 </div>
 
 <div class="container">
-<form id="survey-form" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+<form id="survey-form">
 
 <div class="progress"><div class="progress-bar" id="progress" style="width: 0%"></div></div>
 
-<!-- Section 1: Company Profile -->
-<div class="card" data-section="1">
+<!-- Section 1 -->
+<div class="card">
   <h2><span class="num">1</span> Company Profile</h2>
   <p class="subtitle">Tell us about your warehouse operation</p>
-
   <div class="grid-2">
-    <div class="field">
-      <label class="required">Company Name</label>
-      <input type="text" name="company_name" required>
-    </div>
-    <div class="field">
-      <label class="required">Your Name</label>
-      <input type="text" name="contact_name" required>
-    </div>
+    <div class="field"><label class="required">Company Name</label><input type="text" name="company_name" required></div>
+    <div class="field"><label class="required">Your Name</label><input type="text" name="contact_name" required></div>
   </div>
-
   <div class="grid-2">
-    <div class="field">
-      <label class="required">Email</label>
-      <input type="email" name="email" required>
-    </div>
-    <div class="field">
-      <label>Phone</label>
-      <input type="tel" name="phone" placeholder="(xxx) xxx-xxxx">
-    </div>
+    <div class="field"><label class="required">Email</label><input type="email" name="email" required></div>
+    <div class="field"><label>Phone</label><input type="tel" name="phone" placeholder="(xxx) xxx-xxxx"></div>
   </div>
-
   <div class="field">
     <label class="required">Business Type</label>
     <div class="radio-group">
@@ -102,486 +182,406 @@
       <label><input type="radio" name="business_type" value="other"><span>Other</span></label>
     </div>
   </div>
-
-  <div class="field">
-    <label class="required">Warehouse Location(s)</label>
-    <input type="text" name="location" placeholder="e.g. Dallas TX, Houston TX" required>
-  </div>
+  <div class="field"><label class="required">Warehouse Location(s)</label><input type="text" name="location" placeholder="e.g. Dallas TX, Houston TX" required></div>
 </div>
 
-<!-- Section 2: Current Scale -->
-<div class="card" data-section="2">
+<!-- Section 2 -->
+<div class="card">
   <h2><span class="num">2</span> Current Scale</h2>
   <p class="subtitle">Help us understand the size of your operation</p>
-
   <div class="grid-2">
-    <div class="field">
-      <label class="required">Total Warehouse Space</label>
-      <select name="warehouse_sqft" required>
-        <option value="">Select...</option>
-        <option value="under_5k">Under 5,000 sq ft</option>
-        <option value="5k_15k">5,000 – 15,000 sq ft</option>
-        <option value="15k_50k">15,000 – 50,000 sq ft</option>
-        <option value="50k_100k">50,000 – 100,000 sq ft</option>
-        <option value="over_100k">Over 100,000 sq ft</option>
-      </select>
+    <div class="field"><label class="required">Total Warehouse Space</label>
+      <select name="warehouse_sqft" required><option value="">Select...</option><option value="Under 5,000 sqft">Under 5,000 sq ft</option><option value="5,000-15,000 sqft">5,000 – 15,000 sq ft</option><option value="15,000-50,000 sqft">15,000 – 50,000 sq ft</option><option value="50,000-100,000 sqft">50,000 – 100,000 sq ft</option><option value="Over 100,000 sqft">Over 100,000 sq ft</option></select>
     </div>
-    <div class="field">
-      <label class="required">Number of Warehouse Staff</label>
-      <select name="staff_count" required>
-        <option value="">Select...</option>
-        <option value="1_5">1 – 5</option>
-        <option value="6_15">6 – 15</option>
-        <option value="16_40">16 – 40</option>
-        <option value="41_80">41 – 80</option>
-        <option value="over_80">80+</option>
-      </select>
+    <div class="field"><label class="required">Number of Staff</label>
+      <select name="staff_count" required><option value="">Select...</option><option value="1-5">1 – 5</option><option value="6-15">6 – 15</option><option value="16-40">16 – 40</option><option value="41-80">41 – 80</option><option value="80+">80+</option></select>
     </div>
   </div>
-
   <div class="grid-2">
-    <div class="field">
-      <label>How many clients do you serve?</label>
-      <p class="hint">For 3PL only — how many cargo owners store goods in your warehouse?</p>
-      <select name="client_count">
-        <option value="">Select...</option>
-        <option value="1">Just my own business</option>
-        <option value="2_5">2 – 5 clients</option>
-        <option value="6_15">6 – 15 clients</option>
-        <option value="16_30">16 – 30 clients</option>
-        <option value="over_30">30+ clients</option>
-      </select>
+    <div class="field"><label>Clients Served</label><p class="hint">For 3PL: how many cargo owners?</p>
+      <select name="client_count"><option value="">Select...</option><option value="Own business only">Just my own business</option><option value="2-5">2 – 5</option><option value="6-15">6 – 15</option><option value="16-30">16 – 30</option><option value="30+">30+</option></select>
     </div>
-    <div class="field">
-      <label class="required">Average Orders per Day</label>
-      <select name="daily_orders" required>
-        <option value="">Select...</option>
-        <option value="under_20">Under 20</option>
-        <option value="20_100">20 – 100</option>
-        <option value="100_500">100 – 500</option>
-        <option value="500_2000">500 – 2,000</option>
-        <option value="over_2000">2,000+</option>
-      </select>
+    <div class="field"><label class="required">Orders per Day</label>
+      <select name="daily_orders" required><option value="">Select...</option><option value="Under 20">Under 20</option><option value="20-100">20 – 100</option><option value="100-500">100 – 500</option><option value="500-2,000">500 – 2,000</option><option value="2,000+">2,000+</option></select>
     </div>
   </div>
-
-  <div class="field">
-    <label class="required">How many SKUs do you manage?</label>
-    <select name="sku_count" required>
-      <option value="">Select...</option>
-      <option value="under_100">Under 100</option>
-      <option value="100_500">100 – 500</option>
-      <option value="500_2000">500 – 2,000</option>
-      <option value="2000_10000">2,000 – 10,000</option>
-      <option value="over_10000">10,000+</option>
-    </select>
+  <div class="field"><label class="required">Total SKUs Managed</label>
+    <select name="sku_count" required><option value="">Select...</option><option value="Under 100">Under 100</option><option value="100-500">100 – 500</option><option value="500-2,000">500 – 2,000</option><option value="2,000-10,000">2,000 – 10,000</option><option value="10,000+">10,000+</option></select>
   </div>
 </div>
 
-<!-- Section 3: Current Tools -->
-<div class="card" data-section="3">
+<!-- Section 3 -->
+<div class="card">
   <h2><span class="num">3</span> Current Tools & Process</h2>
   <p class="subtitle">How do you manage warehouse operations today?</p>
-
-  <div class="field">
-    <label class="required">How do you track inventory right now?</label>
+  <div class="field"><label class="required">How do you track inventory now?</label>
     <div class="check-group">
-      <label><input type="checkbox" name="current_tools" value="spreadsheets"><span>Spreadsheets (Excel / Google Sheets)</span></label>
-      <label><input type="checkbox" name="current_tools" value="pen_paper"><span>Pen & Paper / Whiteboard</span></label>
-      <label><input type="checkbox" name="current_tools" value="erp_module"><span>ERP inventory module (QuickBooks, NetSuite, etc.)</span></label>
-      <label><input type="checkbox" name="current_tools" value="basic_wms"><span>Basic WMS / inventory app</span></label>
-      <label><input type="checkbox" name="current_tools" value="full_wms"><span>Full WMS system (which one? ___)</span></label>
-      <label><input type="checkbox" name="current_tools" value="memory"><span>Mostly memory / tribal knowledge</span></label>
+      <label><input type="checkbox" name="current_tools" value="Spreadsheets"><span>Spreadsheets (Excel / Google Sheets)</span></label>
+      <label><input type="checkbox" name="current_tools" value="Pen & Paper"><span>Pen & Paper / Whiteboard</span></label>
+      <label><input type="checkbox" name="current_tools" value="ERP Module"><span>ERP inventory module (QuickBooks, NetSuite, etc.)</span></label>
+      <label><input type="checkbox" name="current_tools" value="Basic WMS"><span>Basic WMS / inventory app</span></label>
+      <label><input type="checkbox" name="current_tools" value="Memory"><span>Mostly memory / tribal knowledge</span></label>
     </div>
   </div>
-
-  <div class="field">
-    <label>If you use any software currently, which one?</label>
-    <input type="text" name="current_software" placeholder="e.g. QuickBooks, ShipStation, Fishbowl, none">
-  </div>
-
-  <div class="field">
-    <label class="required">Do you currently use barcode scanning?</label>
+  <div class="field"><label>Current software (if any)</label><input type="text" name="current_software" placeholder="e.g. QuickBooks, ShipStation, Fishbowl, none"></div>
+  <div class="field"><label class="required">Barcode scanning?</label>
     <div class="radio-group horizontal">
-      <label><input type="radio" name="barcode_use" value="yes_rf" required><span>Yes, RF guns</span></label>
-      <label><input type="radio" name="barcode_use" value="yes_phone"><span>Yes, phone scanning</span></label>
-      <label><input type="radio" name="barcode_use" value="partial"><span>Partially</span></label>
-      <label><input type="radio" name="barcode_use" value="no"><span>No</span></label>
+      <label><input type="radio" name="barcode_use" value="Yes, RF guns" required><span>Yes, RF guns</span></label>
+      <label><input type="radio" name="barcode_use" value="Yes, phone"><span>Yes, phone</span></label>
+      <label><input type="radio" name="barcode_use" value="Partially"><span>Partially</span></label>
+      <label><input type="radio" name="barcode_use" value="No"><span>No</span></label>
     </div>
   </div>
-
-  <div class="field">
-    <label>Where do your orders come from?</label>
-    <p class="hint">Select all that apply</p>
-    <div class="check-group">
-      <label><input type="checkbox" name="order_sources" value="shopify"><span>Shopify</span></label>
-      <label><input type="checkbox" name="order_sources" value="amazon"><span>Amazon (FBA/FBM)</span></label>
-      <label><input type="checkbox" name="order_sources" value="walmart"><span>Walmart</span></label>
-      <label><input type="checkbox" name="order_sources" value="woocommerce"><span>WooCommerce</span></label>
-      <label><input type="checkbox" name="order_sources" value="manual"><span>Phone / Email / Manual</span></label>
-      <label><input type="checkbox" name="order_sources" value="edi"><span>EDI</span></label>
-      <label><input type="checkbox" name="order_sources" value="other_channel"><span>Other</span></label>
+  <div class="field"><label>Order sources</label><p class="hint">Select all that apply</p>
+    <div class="check-group horizontal">
+      <label><input type="checkbox" name="order_sources" value="Shopify"><span>Shopify</span></label>
+      <label><input type="checkbox" name="order_sources" value="Amazon"><span>Amazon</span></label>
+      <label><input type="checkbox" name="order_sources" value="Walmart"><span>Walmart</span></label>
+      <label><input type="checkbox" name="order_sources" value="Manual"><span>Manual</span></label>
+      <label><input type="checkbox" name="order_sources" value="EDI"><span>EDI</span></label>
+      <label><input type="checkbox" name="order_sources" value="Other"><span>Other</span></label>
     </div>
   </div>
 </div>
 
 <!-- Section 4: Pain Points -->
-<div class="card" data-section="4">
+<div class="card">
   <h2><span class="num">4</span> Pain Points</h2>
-  <p class="subtitle">What challenges are you facing? Rate each from 1 (not a problem) to 5 (critical pain)</p>
-
-  <div class="field">
-    <label>Inventory accuracy — we lose track of what's where</label>
-    <div class="scale-row">
-      <label><input type="radio" name="pain_accuracy" value="1">1</label>
-      <label><input type="radio" name="pain_accuracy" value="2">2</label>
-      <label><input type="radio" name="pain_accuracy" value="3">3</label>
-      <label><input type="radio" name="pain_accuracy" value="4">4</label>
-      <label><input type="radio" name="pain_accuracy" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Not a problem</span><span>Critical</span></div>
-  </div>
-
-  <div class="field">
-    <label>Order errors — wrong items shipped, short shipments</label>
-    <div class="scale-row">
-      <label><input type="radio" name="pain_errors" value="1">1</label>
-      <label><input type="radio" name="pain_errors" value="2">2</label>
-      <label><input type="radio" name="pain_errors" value="3">3</label>
-      <label><input type="radio" name="pain_errors" value="4">4</label>
-      <label><input type="radio" name="pain_errors" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Not a problem</span><span>Critical</span></div>
-  </div>
-
-  <div class="field">
-    <label>Slow fulfillment — orders take too long to pick and ship</label>
-    <div class="scale-row">
-      <label><input type="radio" name="pain_speed" value="1">1</label>
-      <label><input type="radio" name="pain_speed" value="2">2</label>
-      <label><input type="radio" name="pain_speed" value="3">3</label>
-      <label><input type="radio" name="pain_speed" value="4">4</label>
-      <label><input type="radio" name="pain_speed" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Not a problem</span><span>Critical</span></div>
-  </div>
-
-  <div class="field">
-    <label>Billing headaches — tracking charges, missed fees, client disputes</label>
-    <div class="scale-row">
-      <label><input type="radio" name="pain_billing" value="1">1</label>
-      <label><input type="radio" name="pain_billing" value="2">2</label>
-      <label><input type="radio" name="pain_billing" value="3">3</label>
-      <label><input type="radio" name="pain_billing" value="4">4</label>
-      <label><input type="radio" name="pain_billing" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Not a problem</span><span>Critical</span></div>
-  </div>
-
-  <div class="field">
-    <label>Client visibility — clients always asking "where is my stuff?"</label>
-    <div class="scale-row">
-      <label><input type="radio" name="pain_visibility" value="1">1</label>
-      <label><input type="radio" name="pain_visibility" value="2">2</label>
-      <label><input type="radio" name="pain_visibility" value="3">3</label>
-      <label><input type="radio" name="pain_visibility" value="4">4</label>
-      <label><input type="radio" name="pain_visibility" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Not a problem</span><span>Critical</span></div>
-  </div>
-
-  <div class="field">
-    <label>Labor dependency — everything breaks when key people are absent</label>
-    <div class="scale-row">
-      <label><input type="radio" name="pain_labor" value="1">1</label>
-      <label><input type="radio" name="pain_labor" value="2">2</label>
-      <label><input type="radio" name="pain_labor" value="3">3</label>
-      <label><input type="radio" name="pain_labor" value="4">4</label>
-      <label><input type="radio" name="pain_labor" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Not a problem</span><span>Critical</span></div>
-  </div>
-
-  <div class="field">
-    <label>Scaling problems — we're growing but our process can't keep up</label>
-    <div class="scale-row">
-      <label><input type="radio" name="pain_scaling" value="1">1</label>
-      <label><input type="radio" name="pain_scaling" value="2">2</label>
-      <label><input type="radio" name="pain_scaling" value="3">3</label>
-      <label><input type="radio" name="pain_scaling" value="4">4</label>
-      <label><input type="radio" name="pain_scaling" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Not a problem</span><span>Critical</span></div>
-  </div>
-
-  <div class="field">
-    <label>What is your #1 daily frustration in warehouse operations?</label>
-    <textarea name="top_frustration" placeholder="In your own words..."></textarea>
-  </div>
+  <p class="subtitle">Rate each from 1 (not a problem) to 5 (critical pain)</p>
+  <div class="field"><label>Inventory accuracy — losing track of what's where</label><div class="scale-row"><label><input type="radio" name="pain_accuracy" value="1">1</label><label><input type="radio" name="pain_accuracy" value="2">2</label><label><input type="radio" name="pain_accuracy" value="3">3</label><label><input type="radio" name="pain_accuracy" value="4">4</label><label><input type="radio" name="pain_accuracy" value="5">5</label></div><div class="scale-labels"><span>Not a problem</span><span>Critical</span></div></div>
+  <div class="field"><label>Order errors — wrong items, short shipments</label><div class="scale-row"><label><input type="radio" name="pain_errors" value="1">1</label><label><input type="radio" name="pain_errors" value="2">2</label><label><input type="radio" name="pain_errors" value="3">3</label><label><input type="radio" name="pain_errors" value="4">4</label><label><input type="radio" name="pain_errors" value="5">5</label></div><div class="scale-labels"><span>Not a problem</span><span>Critical</span></div></div>
+  <div class="field"><label>Slow fulfillment — orders take too long</label><div class="scale-row"><label><input type="radio" name="pain_speed" value="1">1</label><label><input type="radio" name="pain_speed" value="2">2</label><label><input type="radio" name="pain_speed" value="3">3</label><label><input type="radio" name="pain_speed" value="4">4</label><label><input type="radio" name="pain_speed" value="5">5</label></div><div class="scale-labels"><span>Not a problem</span><span>Critical</span></div></div>
+  <div class="field"><label>Billing headaches — missed fees, disputes</label><div class="scale-row"><label><input type="radio" name="pain_billing" value="1">1</label><label><input type="radio" name="pain_billing" value="2">2</label><label><input type="radio" name="pain_billing" value="3">3</label><label><input type="radio" name="pain_billing" value="4">4</label><label><input type="radio" name="pain_billing" value="5">5</label></div><div class="scale-labels"><span>Not a problem</span><span>Critical</span></div></div>
+  <div class="field"><label>Client visibility — "where is my stuff?" calls</label><div class="scale-row"><label><input type="radio" name="pain_visibility" value="1">1</label><label><input type="radio" name="pain_visibility" value="2">2</label><label><input type="radio" name="pain_visibility" value="3">3</label><label><input type="radio" name="pain_visibility" value="4">4</label><label><input type="radio" name="pain_visibility" value="5">5</label></div><div class="scale-labels"><span>Not a problem</span><span>Critical</span></div></div>
+  <div class="field"><label>Labor dependency — breaks when key people are out</label><div class="scale-row"><label><input type="radio" name="pain_labor" value="1">1</label><label><input type="radio" name="pain_labor" value="2">2</label><label><input type="radio" name="pain_labor" value="3">3</label><label><input type="radio" name="pain_labor" value="4">4</label><label><input type="radio" name="pain_labor" value="5">5</label></div><div class="scale-labels"><span>Not a problem</span><span>Critical</span></div></div>
+  <div class="field"><label>Scaling — growing but process can't keep up</label><div class="scale-row"><label><input type="radio" name="pain_scaling" value="1">1</label><label><input type="radio" name="pain_scaling" value="2">2</label><label><input type="radio" name="pain_scaling" value="3">3</label><label><input type="radio" name="pain_scaling" value="4">4</label><label><input type="radio" name="pain_scaling" value="5">5</label></div><div class="scale-labels"><span>Not a problem</span><span>Critical</span></div></div>
+  <div class="field"><label>Your #1 daily frustration?</label><textarea name="top_frustration" placeholder="In your own words..."></textarea></div>
 </div>
 
 <!-- Section 5: Feature Priorities -->
-<div class="card" data-section="5">
+<div class="card">
   <h2><span class="num">5</span> Feature Priorities</h2>
-  <p class="subtitle">If you were choosing a WMS, how important is each feature? (1 = nice to have, 5 = must have)</p>
-
-  <div class="field">
-    <label>Real-time inventory tracking with barcode scanning</label>
-    <div class="scale-row">
-      <label><input type="radio" name="feat_barcode" value="1">1</label>
-      <label><input type="radio" name="feat_barcode" value="2">2</label>
-      <label><input type="radio" name="feat_barcode" value="3">3</label>
-      <label><input type="radio" name="feat_barcode" value="4">4</label>
-      <label><input type="radio" name="feat_barcode" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Nice to have</span><span>Must have</span></div>
-  </div>
-
-  <div class="field">
-    <label>Multi-client support (separate inventory per client)</label>
-    <div class="scale-row">
-      <label><input type="radio" name="feat_multiclient" value="1">1</label>
-      <label><input type="radio" name="feat_multiclient" value="2">2</label>
-      <label><input type="radio" name="feat_multiclient" value="3">3</label>
-      <label><input type="radio" name="feat_multiclient" value="4">4</label>
-      <label><input type="radio" name="feat_multiclient" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Nice to have</span><span>Must have</span></div>
-  </div>
-
-  <div class="field">
-    <label>Client portal — let clients check their own inventory & orders</label>
-    <div class="scale-row">
-      <label><input type="radio" name="feat_portal" value="1">1</label>
-      <label><input type="radio" name="feat_portal" value="2">2</label>
-      <label><input type="radio" name="feat_portal" value="3">3</label>
-      <label><input type="radio" name="feat_portal" value="4">4</label>
-      <label><input type="radio" name="feat_portal" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Nice to have</span><span>Must have</span></div>
-  </div>
-
-  <div class="field">
-    <label>Automated billing — generate invoices based on activity</label>
-    <div class="scale-row">
-      <label><input type="radio" name="feat_billing" value="1">1</label>
-      <label><input type="radio" name="feat_billing" value="2">2</label>
-      <label><input type="radio" name="feat_billing" value="3">3</label>
-      <label><input type="radio" name="feat_billing" value="4">4</label>
-      <label><input type="radio" name="feat_billing" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Nice to have</span><span>Must have</span></div>
-  </div>
-
-  <div class="field">
-    <label>Shopify / Amazon order integration</label>
-    <div class="scale-row">
-      <label><input type="radio" name="feat_ecommerce" value="1">1</label>
-      <label><input type="radio" name="feat_ecommerce" value="2">2</label>
-      <label><input type="radio" name="feat_ecommerce" value="3">3</label>
-      <label><input type="radio" name="feat_ecommerce" value="4">4</label>
-      <label><input type="radio" name="feat_ecommerce" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Nice to have</span><span>Must have</span></div>
-  </div>
-
-  <div class="field">
-    <label>Shipping label printing (UPS / FedEx / USPS)</label>
-    <div class="scale-row">
-      <label><input type="radio" name="feat_shipping" value="1">1</label>
-      <label><input type="radio" name="feat_shipping" value="2">2</label>
-      <label><input type="radio" name="feat_shipping" value="3">3</label>
-      <label><input type="radio" name="feat_shipping" value="4">4</label>
-      <label><input type="radio" name="feat_shipping" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Nice to have</span><span>Must have</span></div>
-  </div>
-
-  <div class="field">
-    <label>Lot / batch / expiry date tracking (FEFO)</label>
-    <div class="scale-row">
-      <label><input type="radio" name="feat_lot" value="1">1</label>
-      <label><input type="radio" name="feat_lot" value="2">2</label>
-      <label><input type="radio" name="feat_lot" value="3">3</label>
-      <label><input type="radio" name="feat_lot" value="4">4</label>
-      <label><input type="radio" name="feat_lot" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Nice to have</span><span>Must have</span></div>
-  </div>
-
-  <div class="field">
-    <label>Mobile phone scanning (no need to buy RF guns)</label>
-    <div class="scale-row">
-      <label><input type="radio" name="feat_mobile" value="1">1</label>
-      <label><input type="radio" name="feat_mobile" value="2">2</label>
-      <label><input type="radio" name="feat_mobile" value="3">3</label>
-      <label><input type="radio" name="feat_mobile" value="4">4</label>
-      <label><input type="radio" name="feat_mobile" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Nice to have</span><span>Must have</span></div>
-  </div>
-
-  <div class="field">
-    <label>Reporting & analytics dashboard</label>
-    <div class="scale-row">
-      <label><input type="radio" name="feat_reports" value="1">1</label>
-      <label><input type="radio" name="feat_reports" value="2">2</label>
-      <label><input type="radio" name="feat_reports" value="3">3</label>
-      <label><input type="radio" name="feat_reports" value="4">4</label>
-      <label><input type="radio" name="feat_reports" value="5">5</label>
-    </div>
-    <div class="scale-labels"><span>Nice to have</span><span>Must have</span></div>
-  </div>
+  <p class="subtitle">How important is each feature? (1 = nice to have, 5 = must have)</p>
+  <div class="field"><label>Real-time inventory with barcode scanning</label><div class="scale-row"><label><input type="radio" name="feat_barcode" value="1">1</label><label><input type="radio" name="feat_barcode" value="2">2</label><label><input type="radio" name="feat_barcode" value="3">3</label><label><input type="radio" name="feat_barcode" value="4">4</label><label><input type="radio" name="feat_barcode" value="5">5</label></div><div class="scale-labels"><span>Nice to have</span><span>Must have</span></div></div>
+  <div class="field"><label>Multi-client inventory support</label><div class="scale-row"><label><input type="radio" name="feat_multiclient" value="1">1</label><label><input type="radio" name="feat_multiclient" value="2">2</label><label><input type="radio" name="feat_multiclient" value="3">3</label><label><input type="radio" name="feat_multiclient" value="4">4</label><label><input type="radio" name="feat_multiclient" value="5">5</label></div><div class="scale-labels"><span>Nice to have</span><span>Must have</span></div></div>
+  <div class="field"><label>Client self-service portal</label><div class="scale-row"><label><input type="radio" name="feat_portal" value="1">1</label><label><input type="radio" name="feat_portal" value="2">2</label><label><input type="radio" name="feat_portal" value="3">3</label><label><input type="radio" name="feat_portal" value="4">4</label><label><input type="radio" name="feat_portal" value="5">5</label></div><div class="scale-labels"><span>Nice to have</span><span>Must have</span></div></div>
+  <div class="field"><label>Automated billing & invoicing</label><div class="scale-row"><label><input type="radio" name="feat_billing" value="1">1</label><label><input type="radio" name="feat_billing" value="2">2</label><label><input type="radio" name="feat_billing" value="3">3</label><label><input type="radio" name="feat_billing" value="4">4</label><label><input type="radio" name="feat_billing" value="5">5</label></div><div class="scale-labels"><span>Nice to have</span><span>Must have</span></div></div>
+  <div class="field"><label>Shopify / Amazon integration</label><div class="scale-row"><label><input type="radio" name="feat_ecommerce" value="1">1</label><label><input type="radio" name="feat_ecommerce" value="2">2</label><label><input type="radio" name="feat_ecommerce" value="3">3</label><label><input type="radio" name="feat_ecommerce" value="4">4</label><label><input type="radio" name="feat_ecommerce" value="5">5</label></div><div class="scale-labels"><span>Nice to have</span><span>Must have</span></div></div>
+  <div class="field"><label>Shipping label printing (UPS/FedEx/USPS)</label><div class="scale-row"><label><input type="radio" name="feat_shipping" value="1">1</label><label><input type="radio" name="feat_shipping" value="2">2</label><label><input type="radio" name="feat_shipping" value="3">3</label><label><input type="radio" name="feat_shipping" value="4">4</label><label><input type="radio" name="feat_shipping" value="5">5</label></div><div class="scale-labels"><span>Nice to have</span><span>Must have</span></div></div>
+  <div class="field"><label>Lot / batch / expiry tracking</label><div class="scale-row"><label><input type="radio" name="feat_lot" value="1">1</label><label><input type="radio" name="feat_lot" value="2">2</label><label><input type="radio" name="feat_lot" value="3">3</label><label><input type="radio" name="feat_lot" value="4">4</label><label><input type="radio" name="feat_lot" value="5">5</label></div><div class="scale-labels"><span>Nice to have</span><span>Must have</span></div></div>
+  <div class="field"><label>Mobile phone scanning (no RF guns)</label><div class="scale-row"><label><input type="radio" name="feat_mobile" value="1">1</label><label><input type="radio" name="feat_mobile" value="2">2</label><label><input type="radio" name="feat_mobile" value="3">3</label><label><input type="radio" name="feat_mobile" value="4">4</label><label><input type="radio" name="feat_mobile" value="5">5</label></div><div class="scale-labels"><span>Nice to have</span><span>Must have</span></div></div>
 </div>
 
-<!-- Section 6: Automation & Future -->
-<div class="card" data-section="6">
+<!-- Section 6: Automation -->
+<div class="card">
   <h2><span class="num">6</span> Automation & Future Plans</h2>
-  <p class="subtitle">Looking ahead: your interest in warehouse automation</p>
-
-  <div class="field">
-    <label>Have you heard of AGV (Automated Guided Vehicles) for warehouses?</label>
-    <div class="radio-group horizontal">
-      <label><input type="radio" name="agv_awareness" value="no"><span>Never heard of it</span></label>
-      <label><input type="radio" name="agv_awareness" value="heard"><span>Heard of it</span></label>
-      <label><input type="radio" name="agv_awareness" value="researched"><span>Researched it</span></label>
-      <label><input type="radio" name="agv_awareness" value="using"><span>Already using</span></label>
-    </div>
+  <p class="subtitle">Your interest in warehouse automation</p>
+  <div class="field"><label>Have you heard of AGV (Automated Guided Vehicles)?</label>
+    <div class="radio-group horizontal"><label><input type="radio" name="agv_awareness" value="Never"><span>Never</span></label><label><input type="radio" name="agv_awareness" value="Heard of it"><span>Heard of it</span></label><label><input type="radio" name="agv_awareness" value="Researched"><span>Researched</span></label><label><input type="radio" name="agv_awareness" value="Using"><span>Already using</span></label></div>
   </div>
-
-  <div class="field">
-    <label>Would you consider adding AGV/robots to your warehouse in the next 1-3 years?</label>
-    <div class="radio-group horizontal">
-      <label><input type="radio" name="agv_interest" value="no"><span>No interest</span></label>
-      <label><input type="radio" name="agv_interest" value="maybe"><span>Maybe, if affordable</span></label>
-      <label><input type="radio" name="agv_interest" value="yes"><span>Yes, actively planning</span></label>
-      <label><input type="radio" name="agv_interest" value="asap"><span>ASAP</span></label>
-    </div>
+  <div class="field"><label>Would you consider AGV/robots in 1-3 years?</label>
+    <div class="radio-group horizontal"><label><input type="radio" name="agv_interest" value="No interest"><span>No interest</span></label><label><input type="radio" name="agv_interest" value="Maybe if affordable"><span>Maybe, if affordable</span></label><label><input type="radio" name="agv_interest" value="Yes, planning"><span>Yes, planning</span></label><label><input type="radio" name="agv_interest" value="ASAP"><span>ASAP</span></label></div>
   </div>
-
-  <div class="field">
-    <label>What would make you seriously consider warehouse automation?</label>
-    <div class="check-group">
-      <label><input type="checkbox" name="agv_triggers" value="labor_cost"><span>Rising labor costs</span></label>
-      <label><input type="checkbox" name="agv_triggers" value="cant_hire"><span>Can't find/keep workers</span></label>
-      <label><input type="checkbox" name="agv_triggers" value="client_demand"><span>Client demanding faster fulfillment</span></label>
-      <label><input type="checkbox" name="agv_triggers" value="competitor"><span>Competitors are automating</span></label>
-      <label><input type="checkbox" name="agv_triggers" value="roi_clear"><span>Clear ROI / payback period shown</span></label>
-      <label><input type="checkbox" name="agv_triggers" value="low_risk"><span>Low-risk pilot program</span></label>
-    </div>
+  <div class="field"><label>What would trigger automation interest?</label>
+    <div class="check-group"><label><input type="checkbox" name="agv_triggers" value="Rising labor costs"><span>Rising labor costs</span></label><label><input type="checkbox" name="agv_triggers" value="Can't find workers"><span>Can't find/keep workers</span></label><label><input type="checkbox" name="agv_triggers" value="Client demands"><span>Client demanding faster fulfillment</span></label><label><input type="checkbox" name="agv_triggers" value="Clear ROI"><span>Clear ROI / payback shown</span></label><label><input type="checkbox" name="agv_triggers" value="Low-risk pilot"><span>Low-risk pilot program</span></label></div>
   </div>
 </div>
 
-<!-- Section 7: Budget & Timeline -->
-<div class="card" data-section="7">
+<!-- Section 7: Budget -->
+<div class="card">
   <h2><span class="num">7</span> Budget & Timeline</h2>
-  <p class="subtitle">Help us find the right fit for your business</p>
-
-  <div class="field">
-    <label class="required">When are you looking to implement a WMS?</label>
-    <div class="radio-group">
-      <label><input type="radio" name="timeline" value="asap" required><span>As soon as possible (within 1 month)</span></label>
-      <label><input type="radio" name="timeline" value="1_3_months"><span>1 – 3 months</span></label>
-      <label><input type="radio" name="timeline" value="3_6_months"><span>3 – 6 months</span></label>
-      <label><input type="radio" name="timeline" value="exploring"><span>Just exploring / no timeline</span></label>
-    </div>
+  <p class="subtitle">Help us find the right fit</p>
+  <div class="field"><label class="required">When do you need a WMS?</label>
+    <div class="radio-group"><label><input type="radio" name="timeline" value="ASAP (within 1 month)" required><span>As soon as possible (within 1 month)</span></label><label><input type="radio" name="timeline" value="1-3 months"><span>1 – 3 months</span></label><label><input type="radio" name="timeline" value="3-6 months"><span>3 – 6 months</span></label><label><input type="radio" name="timeline" value="Just exploring"><span>Just exploring / no timeline</span></label></div>
   </div>
-
-  <div class="field">
-    <label>What is your budget for a WMS solution?</label>
-    <div class="radio-group">
-      <label><input type="radio" name="budget" value="under_3k"><span>Under $3,000 one-time</span></label>
-      <label><input type="radio" name="budget" value="3k_10k"><span>$3,000 – $10,000 one-time</span></label>
-      <label><input type="radio" name="budget" value="monthly_500"><span>$200 – $500 / month subscription</span></label>
-      <label><input type="radio" name="budget" value="monthly_1000"><span>$500 – $1,500 / month subscription</span></label>
-      <label><input type="radio" name="budget" value="not_sure"><span>Not sure yet</span></label>
-    </div>
+  <div class="field"><label>Budget range</label>
+    <div class="radio-group"><label><input type="radio" name="budget" value="Under $3,000"><span>Under $3,000 one-time</span></label><label><input type="radio" name="budget" value="$3,000-$10,000"><span>$3,000 – $10,000 one-time</span></label><label><input type="radio" name="budget" value="$200-$500/mo"><span>$200 – $500 / month</span></label><label><input type="radio" name="budget" value="$500-$1,500/mo"><span>$500 – $1,500 / month</span></label><label><input type="radio" name="budget" value="Not sure"><span>Not sure yet</span></label></div>
   </div>
-
-  <div class="field">
-    <label>What's most important when choosing a WMS vendor?</label>
-    <p class="hint">Rank your top 3</p>
-    <div class="check-group">
-      <label><input type="checkbox" name="vendor_priority" value="price"><span>Lowest price</span></label>
-      <label><input type="checkbox" name="vendor_priority" value="ease_of_use"><span>Easy to use (minimal training)</span></label>
-      <label><input type="checkbox" name="vendor_priority" value="fast_setup"><span>Fast setup (under 4 weeks)</span></label>
-      <label><input type="checkbox" name="vendor_priority" value="local_support"><span>Local on-site support</span></label>
-      <label><input type="checkbox" name="vendor_priority" value="scalability"><span>Scalability (grow with my business)</span></label>
-      <label><input type="checkbox" name="vendor_priority" value="integrations"><span>Integrations (Shopify, Amazon, etc.)</span></label>
-      <label><input type="checkbox" name="vendor_priority" value="automation_path"><span>Path to automation (AGV/robotics)</span></label>
-    </div>
+  <div class="field"><label>Most important in a WMS vendor?</label><p class="hint">Select your top 3</p>
+    <div class="check-group"><label><input type="checkbox" name="vendor_priority" value="Lowest price"><span>Lowest price</span></label><label><input type="checkbox" name="vendor_priority" value="Easy to use"><span>Easy to use (minimal training)</span></label><label><input type="checkbox" name="vendor_priority" value="Fast setup"><span>Fast setup (under 4 weeks)</span></label><label><input type="checkbox" name="vendor_priority" value="Local support"><span>Local on-site support</span></label><label><input type="checkbox" name="vendor_priority" value="Scalability"><span>Scalability</span></label><label><input type="checkbox" name="vendor_priority" value="Integrations"><span>Integrations (Shopify, Amazon)</span></label><label><input type="checkbox" name="vendor_priority" value="Automation path"><span>Path to automation (AGV)</span></label></div>
   </div>
-
-  <div class="field">
-    <label>Anything else you'd like us to know?</label>
-    <textarea name="additional_notes" placeholder="Special requirements, concerns, questions..."></textarea>
-  </div>
+  <div class="field"><label>Anything else?</label><textarea name="additional_notes" placeholder="Special requirements, concerns, questions..."></textarea></div>
 </div>
 
-<button type="submit" class="submit-btn">Submit Survey</button>
-
+<button type="submit" class="submit-btn" id="submit-btn">Submit Assessment</button>
 </form>
 
+<!-- Sending overlay -->
+<div id="sending-overlay" class="sending-overlay hidden">
+  <div class="sending-box">
+    <div class="spinner"></div>
+    <p style="font-weight:600; font-size:16px;">Generating report & sending...</p>
+    <p style="color:#64748b; font-size:13px; margin-top:8px;">Please wait a moment</p>
+  </div>
+</div>
+
+<!-- Thank you -->
 <div id="thank-you" class="card thank-you hidden">
-  <div style="font-size:48px; margin-bottom:16px;">✓</div>
+  <div class="check-circle">
+    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+  </div>
   <h2>Thank You!</h2>
-  <p>We've received your responses. A WMS specialist from our team will reach out within 2 business days to discuss solutions tailored to your warehouse.</p>
-  <p style="margin-top:20px; font-size:13px;">— GreenEcoPower Corp, Mansfield TX</p>
+  <p>We've received your assessment and a PDF report has been sent to our team. A WMS specialist will reach out within <strong>2 business days</strong> to discuss solutions tailored to your warehouse.</p>
+  <p style="margin-top:20px; font-size:13px; color:#94a3b8;">— GreenEcoPower Corp, Mansfield TX</p>
 </div>
 
 </div>
 
 <div class="footer">
-  <p>GreenEcoPower Corp | 2806 Green Circle Dr., Mansfield, TX 76063</p>
-  <p>wuqxmark@gmail.com | maxsmartagv.ai</p>
+  <p>GreenEcoPower Corp · 2806 Green Circle Dr., Mansfield, TX 76063</p>
+  <p style="margin-top:4px;"><a href="mailto:wuqxmark@gmail.com">wuqxmark@gmail.com</a> · <a href="https://maxsmartagv.ai">maxsmartagv.ai</a></p>
 </div>
 
 <script>
-// Progress bar
-const form = document.getElementById('survey-form');
-const sections = document.querySelectorAll('.card');
-const progressBar = document.getElementById('progress');
+// ─── EmailJS Init ───
+// TODO: Replace with your EmailJS credentials
+// 1. Sign up at https://www.emailjs.com (free: 200 emails/month)
+// 2. Create a service (Gmail) and get SERVICE_ID
+// 3. Create a template with variables: {{company}}, {{email}}, {{summary}}, {{pdf_link}}
+// 4. Get your PUBLIC_KEY from Account > API Keys
+const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY';  // Replace
+const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID';  // Replace
+const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID'; // Replace
 
+// ─── Progress bar ───
+const form = document.getElementById('survey-form');
+const progressBar = document.getElementById('progress');
 form.addEventListener('change', () => {
-  const allInputs = form.querySelectorAll('input[required], select[required]');
-  const filled = [...allInputs].filter(i => i.type === 'radio' ? form.querySelector(`input[name="${i.name}"]:checked`) : i.value).length;
-  const unique = new Set([...allInputs].map(i => i.name)).size;
-  const pct = Math.min(100, Math.round((filled / unique) * 100));
-  progressBar.style.width = pct + '%';
+  const all = form.querySelectorAll('input[required], select[required]');
+  const names = new Set([...all].map(i => i.name));
+  let filled = 0;
+  names.forEach(n => { if (form.querySelector(`[name="${n}"]:checked, select[name="${n}"]`)?.value) filled++; });
+  progressBar.style.width = Math.min(100, Math.round((filled / names.size) * 100)) + '%';
 });
 
-// Form submit
-form.addEventListener('submit', (e) => {
-  e.preventDefault();
-
-  const data = new FormData(form);
-  const json = {};
-  for (const [key, value] of data.entries()) {
-    if (json[key]) {
-      json[key] = Array.isArray(json[key]) ? [...json[key], value] : [json[key], value];
+// ─── Collect form data ───
+function collectData() {
+  const fd = new FormData(form);
+  const data = {};
+  for (const [k, v] of fd.entries()) {
+    if (data[k]) {
+      data[k] = Array.isArray(data[k]) ? [...data[k], v] : [data[k], v];
     } else {
-      json[key] = value;
+      data[k] = v;
     }
   }
+  return data;
+}
 
-  console.log('Survey data:', json);
+// ─── Generate PDF ───
+function generatePDF(data) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, M = 18;
+  let y = 20;
 
-  // Send to email via Formspree (free tier: 50 submissions/month)
-  // Replace YOUR_FORM_ID with your actual Formspree form ID
-  // Sign up at https://formspree.io → create form → get ID
-  fetch('https://formspree.io/f/YOUR_FORM_ID', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(json)
-  }).catch(() => {});
+  // Header
+  doc.setFillColor(30, 64, 175);
+  doc.rect(0, 0, W, 38, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('WMS Readiness Assessment', M, 18);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('GreenEcoPower Corp | ' + new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }), M, 28);
+  doc.text('Confidential', W - M, 28, { align: 'right' });
+  y = 48;
 
-  // Also try the self-hosted API if available
-  fetch('/api/v1/survey', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(json)
-  }).catch(() => {});
+  doc.setTextColor(30, 30, 30);
 
+  function section(title) {
+    if (y > 260) { doc.addPage(); y = 20; }
+    doc.setFillColor(241, 245, 249);
+    doc.roundedRect(M - 2, y - 5, W - 2 * M + 4, 10, 2, 2, 'F');
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(30, 64, 175);
+    doc.text(title, M, y + 2);
+    doc.setTextColor(30, 30, 30);
+    y += 12;
+  }
+
+  function row(label, value) {
+    if (y > 275) { doc.addPage(); y = 20; }
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text(label, M, y);
+    doc.setFont('helvetica', 'normal');
+    const val = Array.isArray(value) ? value.join(', ') : (value || '—');
+    const lines = doc.splitTextToSize(val, W - 2 * M - 60);
+    doc.text(lines, M + 62, y);
+    y += Math.max(6, lines.length * 5) + 1;
+  }
+
+  function painRow(label, val) {
+    if (y > 275) { doc.addPage(); y = 20; }
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text(label, M, y);
+    // Draw scale bar
+    const barX = M + 95, barW = 60;
+    for (let i = 1; i <= 5; i++) {
+      const x = barX + (i - 1) * 12;
+      if (val && parseInt(val) >= i) {
+        const r = parseInt(val) <= 2 ? 34 : parseInt(val) <= 3 ? 245 : 239;
+        const g = parseInt(val) <= 2 ? 197 : parseInt(val) <= 3 ? 158 : 68;
+        const b = parseInt(val) <= 2 ? 94 : parseInt(val) <= 3 ? 11 : 68;
+        doc.setFillColor(r, g, b);
+        doc.roundedRect(x, y - 4, 10, 6, 1, 1, 'F');
+        doc.setTextColor(255, 255, 255);
+      } else {
+        doc.setFillColor(226, 232, 240);
+        doc.roundedRect(x, y - 4, 10, 6, 1, 1, 'F');
+        doc.setTextColor(148, 163, 184);
+      }
+      doc.setFontSize(8);
+      doc.text(String(i), x + 5, y, { align: 'center' });
+    }
+    doc.setTextColor(30, 30, 30);
+    y += 8;
+  }
+
+  // ── Sections ──
+  section('1. Company Profile');
+  row('Company', data.company_name);
+  row('Contact', data.contact_name);
+  row('Email', data.email);
+  row('Phone', data.phone);
+  row('Business Type', data.business_type);
+  row('Location', data.location);
+
+  section('2. Current Scale');
+  row('Warehouse Size', data.warehouse_sqft);
+  row('Staff Count', data.staff_count);
+  row('Clients Served', data.client_count);
+  row('Daily Orders', data.daily_orders);
+  row('SKU Count', data.sku_count);
+
+  section('3. Current Tools');
+  row('Tracking Method', data.current_tools);
+  row('Software', data.current_software);
+  row('Barcode Use', data.barcode_use);
+  row('Order Sources', data.order_sources);
+
+  section('4. Pain Points (1-5)');
+  painRow('Inventory accuracy', data.pain_accuracy);
+  painRow('Order errors', data.pain_errors);
+  painRow('Slow fulfillment', data.pain_speed);
+  painRow('Billing headaches', data.pain_billing);
+  painRow('Client visibility', data.pain_visibility);
+  painRow('Labor dependency', data.pain_labor);
+  painRow('Scaling problems', data.pain_scaling);
+  if (data.top_frustration) { row('#1 Frustration', data.top_frustration); }
+
+  section('5. Feature Priorities (1-5)');
+  painRow('Barcode scanning', data.feat_barcode);
+  painRow('Multi-client', data.feat_multiclient);
+  painRow('Client portal', data.feat_portal);
+  painRow('Auto billing', data.feat_billing);
+  painRow('Shopify/Amazon', data.feat_ecommerce);
+  painRow('Shipping labels', data.feat_shipping);
+  painRow('Lot/expiry', data.feat_lot);
+  painRow('Mobile scanning', data.feat_mobile);
+
+  section('6. Automation Interest');
+  row('AGV Awareness', data.agv_awareness);
+  row('AGV Interest', data.agv_interest);
+  row('Triggers', data.agv_triggers);
+
+  section('7. Budget & Timeline');
+  row('Timeline', data.timeline);
+  row('Budget', data.budget);
+  row('Vendor Priority', data.vendor_priority);
+  if (data.additional_notes) { row('Notes', data.additional_notes); }
+
+  // Footer
+  doc.setFontSize(8);
+  doc.setTextColor(148, 163, 184);
+  const pages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i);
+    doc.text(`Page ${i} of ${pages} | WMS QuickStart Assessment | GreenEcoPower Corp`, W / 2, 290, { align: 'center' });
+  }
+
+  return doc;
+}
+
+// ─── Submit ───
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const data = collectData();
+  const btn = document.getElementById('submit-btn');
+  const overlay = document.getElementById('sending-overlay');
+
+  btn.disabled = true;
+  overlay.classList.remove('hidden');
+
+  try {
+    // 1. Generate PDF
+    const pdf = generatePDF(data);
+    const pdfBase64 = pdf.output('datauristring').split(',')[1];
+
+    // 2. Build summary for email
+    const painScores = [
+      `Accuracy: ${data.pain_accuracy || '-'}/5`,
+      `Errors: ${data.pain_errors || '-'}/5`,
+      `Speed: ${data.pain_speed || '-'}/5`,
+      `Billing: ${data.pain_billing || '-'}/5`,
+      `Visibility: ${data.pain_visibility || '-'}/5`,
+      `Labor: ${data.pain_labor || '-'}/5`,
+      `Scaling: ${data.pain_scaling || '-'}/5`,
+    ].join(' | ');
+
+    const summary = [
+      `Company: ${data.company_name}`,
+      `Contact: ${data.contact_name} (${data.email})`,
+      `Phone: ${data.phone || 'N/A'}`,
+      `Type: ${data.business_type}`,
+      `Location: ${data.location}`,
+      `Size: ${data.warehouse_sqft} | Staff: ${data.staff_count} | Orders/day: ${data.daily_orders}`,
+      `Clients: ${data.client_count || 'N/A'} | SKUs: ${data.sku_count}`,
+      `Current tools: ${Array.isArray(data.current_tools) ? data.current_tools.join(', ') : data.current_tools || 'N/A'}`,
+      `Barcode: ${data.barcode_use}`,
+      `\nPain Points: ${painScores}`,
+      `Top frustration: ${data.top_frustration || 'N/A'}`,
+      `\nAGV awareness: ${data.agv_awareness || 'N/A'} | Interest: ${data.agv_interest || 'N/A'}`,
+      `Timeline: ${data.timeline} | Budget: ${data.budget || 'N/A'}`,
+    ].join('\n');
+
+    // 3. Send via EmailJS (if configured)
+    if (EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY') {
+      emailjs.init(EMAILJS_PUBLIC_KEY);
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_email: 'wuqxmark@gmail.com',
+        company: data.company_name,
+        contact: data.contact_name,
+        email: data.email,
+        summary: summary,
+        pdf_content: pdfBase64,
+      });
+    }
+
+    // 4. Also send via Formspree as backup (no PDF but gets the data)
+    await fetch('https://formspree.io/f/xpwzgqkr', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        _subject: `WMS Assessment: ${data.company_name}`,
+        ...data,
+        _replyto: data.email,
+      }),
+    }).catch(() => {});
+
+    // 5. Auto-download PDF for the submitter too
+    pdf.save(`WMS-Assessment-${data.company_name.replace(/\s+/g, '-')}.pdf`);
+
+  } catch (err) {
+    console.error('Submit error:', err);
+  }
+
+  // Show thank you
+  overlay.classList.add('hidden');
   form.classList.add('hidden');
   document.querySelector('.progress').classList.add('hidden');
   document.getElementById('thank-you').classList.remove('hidden');
